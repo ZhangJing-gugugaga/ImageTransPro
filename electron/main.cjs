@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 const path = require('path')
 
 let mainWindow
@@ -25,6 +25,12 @@ function createWindow() {
     mainWindow = null
   })
 }
+
+// 保存对话框 IPC
+ipcMain.handle('show-save-dialog', async (event, options) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  return dialog.showSaveDialog(win, options)
+})
 
 app.whenReady().then(createWindow)
 
