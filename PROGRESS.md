@@ -16,6 +16,9 @@
 - [x] FR-04 修复 pushHistory 闭包（2026-06-28）— Zustand get() 已解决
 - [x] FR-05 区域 ID 改用 crypto.randomUUID（2026-06-28）— 提交：8c91e27
 - [x] FR-06 历史上限 + UI 状态（2026-06-28）— store.js MAX_HISTORY=50 + Toolbar 已显示
+- [x] FR-15 缓存 Image 对象（2026-06-28）— 提交：4d43a75
+- [x] FR-17 Error Boundary（2026-06-28）— 提交：87319d4
+- [x] FR-18 图片加载失败提示（2026-06-28）— 提交：0e85c40
 
 ## 未开始
 - [ ] FR-07 Space + 拖拽平移优化
@@ -26,9 +29,6 @@
 - [ ] FR-12 保存 .imagetrans 项目
 - [ ] FR-13 打开 .imagetrans 项目
 - [ ] FR-14 最近文件列表
-- [ ] FR-15 缓存 Image 对象
 - [ ] FR-16 大图导出 toBlob
-- [ ] FR-17 Error Boundary
-- [ ] FR-18 图片加载失败提示
 - [ ] M4 质量基建
 - [ ] M5 验收 + Bug 修复

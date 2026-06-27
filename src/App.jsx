@@ -38,6 +38,25 @@ export default function App() {
   // 渲染画布
   useEffect(() => { renderCanvas() }, [renderCanvas])
 
+  // Space 键切换 grab 光标（按住即生效，无需移动鼠标）
+  useEffect(() => {
+    if (step !== 2) return
+    const onDown = (e) => {
+      if (e.code === 'Space' && viewportRef.current && interaction.interactionState === 'idle') {
+        e.preventDefault()
+        viewportRef.current.style.cursor = 'grab'
+      }
+    }
+    const onUp = (e) => {
+      if (e.code === 'Space' && viewportRef.current && interaction.interactionState === 'idle') {
+        viewportRef.current.style.cursor = 'crosshair'
+      }
+    }
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup', onUp)
+    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp) }
+  }, [step, interaction.interactionState])
+
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e) => {
