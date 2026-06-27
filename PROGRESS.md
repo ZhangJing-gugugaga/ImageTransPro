@@ -5,9 +5,12 @@
   - 文件：src/constants.js, src/hooks/{useHistory,useViewTransform,useCanvasRenderer,useCanvasInteraction}.js, src/components/{UploadScreen,CanvasViewport,Toolbar,PropertyPanel,SymbolPalette}.jsx, src/utils/exportImage.js
   - 验证：build 通过（174 kB gzip 55 kB）
   - 提交：9553ab6
+- [x] FR-02 统一 Canvas 渲染函数（2026-06-28）
+  - 文件：src/utils/canvasRenderer.js（新增）, src/hooks/useCanvasRenderer.js（简化）, src/utils/exportImage.js（简化）
+  - 验证：build 通过（173.66 kB gzip 55.19 kB）
+  - 提交：acbc588
 
 ## 未开始
-- [ ] FR-02 统一 Canvas 渲染函数
 - [ ] FR-03 引入 Zustand 状态管理
 - [ ] FR-04 修复 pushHistory 闭包
 - [ ] FR-05 区域 ID 改用 crypto.randomUUID
