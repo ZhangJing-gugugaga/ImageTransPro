@@ -33,5 +33,9 @@
   - 11 个单元测试全部通过
   - npm scripts: lint / format / test / test:watch
 
-## 未开始
-- [ ] M5 验收 + Bug 修复
+- [x] M5 验收 + Bug 修复（2026-06-28）— 提交：9278028
+  - App.jsx 140 行（目标 ≤ 200）
+  - 所有 PRD 验收标准通过
+  - 11 单元测试、0 lint 错误、build 通过
+
+## 全部完成 ✅
