@@ -26,13 +26,15 @@ export default function App() {
   const outputCanvasRef = useRef(null)
 
   const { transform, setTransform, fitScreen, zoom, handleWheel, screenToImage } = useViewTransform(viewportRef)
-  const { canvasRef, renderCanvas } = useCanvasRenderer(imageSrc, regions, selectedRegionId, transform.scale)
+  const { canvasRef, renderCanvas, setGuides } = useCanvasRenderer(imageSrc, regions, selectedRegionId, transform.scale)
 
   const interaction = useCanvasInteraction({
     viewportRef, transform, setTransform, screenToImage,
     regions, setRegions, selectedRegionId, setSelectedRegionId,
     pushHistory, updateRegionProperty,
     offscreenCanvasRef, imgSize, toolMode, setToolMode,
+    onGuidesChange: setGuides,
+    renderCanvas,
   })
 
   // 渲染画布

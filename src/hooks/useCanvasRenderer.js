@@ -4,6 +4,7 @@ import { renderRegions } from '../utils/canvasRenderer'
 export function useCanvasRenderer(imageSrc, regions, selectedRegionId, transformScale) {
   const canvasRef = useRef(null)
   const imageRef = useRef(null)
+  const guidesRef = useRef([])
 
   // imageSrc 变化时重新加载 Image 对象
   useEffect(() => {
@@ -13,16 +14,20 @@ export function useCanvasRenderer(imageSrc, regions, selectedRegionId, transform
     imageRef.current = img
   }, [imageSrc])
 
+  const setGuides = useCallback((guides) => {
+    guidesRef.current = guides
+  }, [])
+
   const renderCanvas = useCallback(() => {
     if (!canvasRef.current || !imageSrc || !imageRef.current) return
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
     const img = imageRef.current
 
-    const draw = () => renderRegions(ctx, img, regions, selectedRegionId, transformScale)
+    const draw = () => renderRegions(ctx, img, regions, selectedRegionId, transformScale, guidesRef.current)
     if (img.complete) draw()
     else img.onload = draw
   }, [imageSrc, regions, selectedRegionId, transformScale])
 
-  return { canvasRef, renderCanvas }
+  return { canvasRef, renderCanvas, setGuides }
 }

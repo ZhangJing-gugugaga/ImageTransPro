@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { getAlignmentGuides } from '../utils/alignmentGuides'
 
 export function useCanvasInteraction({
   viewportRef,
@@ -15,6 +16,8 @@ export function useCanvasInteraction({
   imgSize,
   toolMode,
   setToolMode,
+  onGuidesChange,
+  renderCanvas,
 }) {
   const [interactionState, setInteractionState] = useState('idle')
   const [pickerInfo, setPickerInfo] = useState({ x: 0, y: 0, color: '#ffffff', visible: false })
@@ -157,9 +160,16 @@ export function useCanvasInteraction({
       const dx = imgPos.x - dragStartRef.current.x
       const dy = imgPos.y - dragStartRef.current.y
       const init = initialRectRef.current
+      const moved = { ...init, x: init.x + dx, y: init.y + dy }
       setRegions(regions.map((r) =>
-        r.id === activeRegionIdRef.current ? { ...r, x: init.x + dx, y: init.y + dy } : r,
+        r.id === activeRegionIdRef.current ? moved : r,
       ))
+      // 计算对齐辅助线
+      if (onGuidesChange) {
+        const { guides } = getAlignmentGuides(moved, regions, imgSize)
+        onGuidesChange(guides)
+        if (renderCanvas) renderCanvas()
+      }
     } else if (interactionState === 'resizing_region') {
       const dx = imgPos.x - dragStartRef.current.x
       const dy = imgPos.y - dragStartRef.current.y
@@ -178,7 +188,14 @@ export function useCanvasInteraction({
         newRect.y = init.y + (init.height - finalHeight)
         newRect.height = finalHeight
       }
-      setRegions(regions.map((r) => (r.id === activeRegionIdRef.current ? { ...r, ...newRect } : r)))
+      const resized = { ...r, ...newRect }
+      setRegions(regions.map((r) => (r.id === activeRegionIdRef.current ? resized : r)))
+      // 计算对齐辅助线
+      if (onGuidesChange) {
+        const { guides } = getAlignmentGuides(resized, regions, imgSize)
+        onGuidesChange(guides)
+        if (renderCanvas) renderCanvas()
+      }
     }
 
     // 更新鼠标样式
@@ -200,6 +217,9 @@ export function useCanvasInteraction({
   }, [viewportRef, toolMode, interactionState, selectedRegionId, regions, screenToImage, transform, setTransform, setRegions, getColorAtPixel, getResizeHandle])
 
   const handleMouseUp = useCallback((e) => {
+    // 清除对齐辅助线
+    if (onGuidesChange) onGuidesChange([])
+
     if (interactionState === 'moving_region' || interactionState === 'resizing_region') {
       pushHistory(regions)
     } else if (interactionState === 'drawing') {

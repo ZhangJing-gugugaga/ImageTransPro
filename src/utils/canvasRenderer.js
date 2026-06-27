@@ -5,8 +5,9 @@
  * @param {Array} regions
  * @param {string|null} selectedRegionId - 选中区域 ID，null 则不画手柄
  * @param {number} transformScale - 当前缩放比，用于手柄大小计算
+ * @param {Array} [guides] - 可选对齐辅助线 [{type:'h'|'v', pos:number}]
  */
-export function renderRegions(ctx, img, regions, selectedRegionId, transformScale = 1) {
+export function renderRegions(ctx, img, regions, selectedRegionId, transformScale = 1, guides = []) {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   ctx.drawImage(img, 0, 0)
 
@@ -67,4 +68,24 @@ export function renderRegions(ctx, img, regions, selectedRegionId, transformScal
       })
     }
   })
+
+  // 绘制对齐辅助线
+  if (guides.length > 0) {
+    ctx.save()
+    ctx.strokeStyle = '#818cf8' // indigo-400
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    guides.forEach((g) => {
+      ctx.beginPath()
+      if (g.type === 'v') {
+        ctx.moveTo(g.pos, 0)
+        ctx.lineTo(g.pos, ctx.canvas.height)
+      } else {
+        ctx.moveTo(0, g.pos)
+        ctx.lineTo(ctx.canvas.width, g.pos)
+      }
+      ctx.stroke()
+    })
+    ctx.restore()
+  }
 }
