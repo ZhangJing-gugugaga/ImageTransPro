@@ -7,7 +7,7 @@ import { useViewTransform } from './hooks/useViewTransform'
 import { useCanvasRenderer } from './hooks/useCanvasRenderer'
 import { useCanvasInteraction } from './hooks/useCanvasInteraction'
 import { generateResult as exportImage } from './utils/exportImage'
-import { saveProject, openProject } from './utils/projectIO'
+import { saveProject, openProject, getRecentFiles } from './utils/projectIO'
 import useStore from './store'
 
 export default function App() {
@@ -148,8 +148,8 @@ export default function App() {
 
   const handleSave = () => saveProject({ imageSrc, imgSize, regions, transform })
 
-  const handleOpen = async () => {
-    const data = await openProject()
+  const handleOpen = async (filePath) => {
+    const data = await openProject(filePath)
     if (!data) return
     setImageSrc(data.imageSrc)
     setImgSize(data.imgSize)
@@ -157,6 +157,8 @@ export default function App() {
     setStep(2)
     if (data.transform) fitScreen(data.imgSize.width, data.imgSize.height)
   }
+
+  const recentFiles = getRecentFiles()
 
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-800 overflow-hidden font-sans">
@@ -201,6 +203,8 @@ export default function App() {
               toolMode={toolMode}
               pushHistory={() => pushHistory(regions)}
               textAreaRef={textAreaRef}
+              recentFiles={recentFiles}
+              onOpenRecent={handleOpen}
             />
             <canvas ref={offscreenCanvasRef} className="hidden" />
             <canvas ref={outputCanvasRef} width={imgSize.width} height={imgSize.height} className="hidden" />

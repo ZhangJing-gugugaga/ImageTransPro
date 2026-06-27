@@ -12,6 +12,8 @@ export default function PropertyPanel({
   toolMode,
   pushHistory,
   textAreaRef,
+  recentFiles,
+  onOpenRecent,
 }) {
   const selectedRegion = regions.find((r) => r.id === selectedRegionId)
 
@@ -158,16 +160,32 @@ export default function PropertyPanel({
             </button>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-300 py-20 text-center px-4">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+          <div className="flex flex-col items-center justify-center h-full text-slate-300 py-10 text-center px-4">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
               <MousePointer2 className="w-8 h-8 opacity-20" />
             </div>
             <h4 className="text-slate-900 font-bold mb-1">未选中区域</h4>
-            <p className="text-xs font-medium leading-relaxed">
+            <p className="text-xs font-medium leading-relaxed mb-6">
               在图片上点击并拖拽
               <br />
               即可创建新的文本框
             </p>
+            {recentFiles && recentFiles.length > 0 && (
+              <div className="w-full text-left">
+                <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">最近项目</h5>
+                <div className="space-y-1">
+                  {recentFiles.map((fp) => (
+                    <button
+                      key={fp}
+                      onClick={() => onOpenRecent(fp)}
+                      className="w-full text-left text-xs text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1.5 rounded-lg truncate transition-colors"
+                    >
+                      {fp.split(/[/\\]/).pop()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
