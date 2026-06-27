@@ -6,6 +6,7 @@ import PropertyPanel from './components/PropertyPanel'
 import { useViewTransform } from './hooks/useViewTransform'
 import { useCanvasRenderer } from './hooks/useCanvasRenderer'
 import { useCanvasInteraction } from './hooks/useCanvasInteraction'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { generateResult as exportImage } from './utils/exportImage'
 import { saveProject, openProject, getRecentFiles } from './utils/projectIO'
 import useStore from './store'
@@ -36,80 +37,17 @@ export default function App() {
     selectedRegionIds, toggleRegionSelect, setSelectedRegionIds,
     pushHistory, updateRegionProperty,
     offscreenCanvasRef, imgSize, toolMode, setToolMode,
-    onGuidesChange: setGuides,
-    renderCanvas,
+    onGuidesChange: setGuides, renderCanvas,
   })
 
-  // 渲染画布
+  useKeyboardShortcuts({
+    selectedRegionId, selectedRegionIds, regions, toolMode, setToolMode,
+    setRegions, interactionState: interaction.interactionState,
+    undo, redo, deleteRegion, deleteSelectedRegions, addRegion,
+    viewportRef, step,
+  })
+
   useEffect(() => { renderCanvas() }, [renderCanvas])
-
-  // Space 键切换 grab 光标（按住即生效，无需移动鼠标）
-  useEffect(() => {
-    if (step !== 2) return
-    const onDown = (e) => {
-      if (e.code === 'Space' && viewportRef.current && interaction.interactionState === 'idle') {
-        e.preventDefault()
-        viewportRef.current.style.cursor = 'grab'
-      }
-    }
-    const onUp = (e) => {
-      if (e.code === 'Space' && viewportRef.current && interaction.interactionState === 'idle') {
-        viewportRef.current.style.cursor = 'crosshair'
-      }
-    }
-    window.addEventListener('keydown', onDown)
-    window.addEventListener('keyup', onUp)
-    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp) }
-  }, [step, interaction.interactionState])
-
-  // 键盘快捷键
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      const isInput = document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT'
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
-        e.preventDefault()
-        e.shiftKey ? redo() : undo()
-        return
-      }
-      // Ctrl+Y: 重做
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
-        e.preventDefault()
-        redo()
-        return
-      }
-      // Ctrl+D: 复制选中区域
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedRegionId && !isInput) {
-        e.preventDefault()
-        const src = regions.find((r) => r.id === selectedRegionId)
-        if (src) {
-          const newRegion = { ...src, id: crypto.randomUUID(), x: src.x + 10, y: src.y + 10 }
-          addRegion(newRegion)
-        }
-        return
-      }
-      // 方向键微移
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selectedRegionId && !isInput) {
-        e.preventDefault()
-        const step = e.shiftKey ? 10 : 1
-        const src = regions.find((r) => r.id === selectedRegionId)
-        if (!src) return
-        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
-        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
-        setRegions(regions.map((r) => r.id === selectedRegionId ? { ...r, x: src.x + dx, y: src.y + dy } : r))
-        return
-      }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRegionId && interaction.interactionState === 'idle' && !isInput) {
-        if (selectedRegionIds.length > 1) {
-          deleteSelectedRegions()
-        } else {
-          deleteRegion(selectedRegionId)
-        }
-      }
-      if (e.key === 'Escape' && toolMode === 'picker') setToolMode('draw')
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedRegionId, toolMode, regions, interaction.interactionState, undo, redo, deleteRegion, setToolMode, addRegion, setRegions])
 
   // 拖拽上传
   useEffect(() => {
@@ -136,9 +74,7 @@ export default function App() {
       img.onload = () => {
         setImageSrc(img.src)
         setImgSize({ width: img.width, height: img.height })
-        setRegions([])
-        resetHistory()
-        setStep(2)
+        setRegions([]); resetHistory(); setStep(2)
         if (offscreenCanvasRef.current) {
           const offCtx = offscreenCanvasRef.current.getContext('2d')
           offscreenCanvasRef.current.width = img.width
@@ -153,32 +89,21 @@ export default function App() {
   }
 
   const handleSave = () => saveProject({ imageSrc, imgSize, regions, transform })
-
   const handleOpen = async (filePath) => {
     const data = await openProject(filePath)
     if (!data) return
-    setImageSrc(data.imageSrc)
-    setImgSize(data.imgSize)
-    setRegions(data.regions)
-    setStep(2)
+    setImageSrc(data.imageSrc); setImgSize(data.imgSize); setRegions(data.regions); setStep(2)
     if (data.transform) fitScreen(data.imgSize.width, data.imgSize.height)
   }
-
-  const recentFiles = getRecentFiles()
 
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-800 overflow-hidden font-sans">
       <Toolbar
-        step={step}
-        toolMode={toolMode}
-        setToolMode={setToolMode}
-        canUndo={canUndo()}
-        canRedo={canRedo()}
-        onUndo={undo}
-        onRedo={redo}
+        step={step} toolMode={toolMode} setToolMode={setToolMode}
+        canUndo={canUndo()} canRedo={canRedo()}
+        onUndo={undo} onRedo={redo}
         onExport={() => exportImage(imageSrc, regions, outputCanvasRef.current)}
-        onSave={handleSave}
-        onOpen={handleOpen}
+        onSave={handleSave} onOpen={handleOpen}
       />
       <main className="flex-1 flex overflow-hidden">
         {step === 1 ? (
@@ -186,31 +111,24 @@ export default function App() {
         ) : (
           <>
             <CanvasViewport
-              viewportRef={viewportRef}
-              canvasRef={canvasRef}
-              transform={transform}
-              imgSize={imgSize}
-              toolMode={toolMode}
+              viewportRef={viewportRef} canvasRef={canvasRef}
+              transform={transform} imgSize={imgSize} toolMode={toolMode}
               pickerInfo={interaction.pickerInfo}
-              onZoom={zoom}
-              onFitScreen={() => fitScreen()}
+              onZoom={zoom} onFitScreen={() => fitScreen()}
               onMouseDown={interaction.handleMouseDown}
               onMouseMove={interaction.handleMouseMove}
               onMouseUp={interaction.handleMouseUp}
               onWheel={handleWheel}
             />
             <PropertyPanel
-              selectedRegionId={selectedRegionId}
-              regions={regions}
+              selectedRegionId={selectedRegionId} regions={regions}
               onUpdateProperty={updateRegionProperty}
-              onDeleteRegion={deleteRegion}
-              onInsertSymbol={insertSymbol}
+              onDeleteRegion={deleteRegion} onInsertSymbol={insertSymbol}
               onActivateEyeDropper={interaction.activateEyeDropper}
               toolMode={toolMode}
               pushHistory={() => pushHistory(regions)}
               textAreaRef={textAreaRef}
-              recentFiles={recentFiles}
-              onOpenRecent={handleOpen}
+              recentFiles={getRecentFiles()} onOpenRecent={handleOpen}
             />
             <canvas ref={offscreenCanvasRef} className="hidden" />
             <canvas ref={outputCanvasRef} width={imgSize.width} height={imgSize.height} className="hidden" />
