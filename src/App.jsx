@@ -11,11 +11,12 @@ import { saveProject, openProject, getRecentFiles } from './utils/projectIO'
 import useStore from './store'
 
 export default function App() {
-  const { step, imageSrc, imgSize, regions, selectedRegionId, toolMode } = useStore()
+  const { step, imageSrc, imgSize, regions, selectedRegionId, selectedRegionIds, toolMode } = useStore()
   const {
     setStep, setImageSrc, setImgSize, setRegions, setSelectedRegionId, setToolMode,
     pushHistory, undo, redo, canUndo, canRedo, resetHistory,
     updateRegionProperty, deleteRegion, insertSymbol, addRegion,
+    toggleRegionSelect, setSelectedRegionIds, deleteSelectedRegions,
   } = useStore()
 
   const [loadError, setLoadError] = useState(null)
@@ -32,6 +33,7 @@ export default function App() {
   const interaction = useCanvasInteraction({
     viewportRef, transform, setTransform, screenToImage,
     regions, setRegions, selectedRegionId, setSelectedRegionId,
+    selectedRegionIds, toggleRegionSelect, setSelectedRegionIds,
     pushHistory, updateRegionProperty,
     offscreenCanvasRef, imgSize, toolMode, setToolMode,
     onGuidesChange: setGuides,
@@ -97,7 +99,11 @@ export default function App() {
         return
       }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRegionId && interaction.interactionState === 'idle' && !isInput) {
-        deleteRegion(selectedRegionId)
+        if (selectedRegionIds.length > 1) {
+          deleteSelectedRegions()
+        } else {
+          deleteRegion(selectedRegionId)
+        }
       }
       if (e.key === 'Escape' && toolMode === 'picker') setToolMode('draw')
     }

@@ -10,6 +10,9 @@ export function useCanvasInteraction({
   setRegions,
   selectedRegionId,
   setSelectedRegionId,
+  selectedRegionIds,
+  toggleRegionSelect,
+  setSelectedRegionIds,
   pushHistory,
   updateRegionProperty,
   offscreenCanvasRef,
@@ -27,6 +30,7 @@ export function useCanvasInteraction({
   const resizeHandleRef = useRef(null)
   const initialRectRef = useRef(null)
   const initialTransformRef = useRef(null)
+  const selectionRectRef = useRef(null) // { startX, startY, endX, endY }
 
   const getResizeHandle = useCallback((imgPos, region) => {
     if (!region) return null
@@ -125,17 +129,28 @@ export function useCanvasInteraction({
     )
 
     if (clickedRegion) {
+      if (e.shiftKey) {
+        // Shift+点击：切换多选
+        toggleRegionSelect(clickedRegion.id)
+        return
+      }
       setSelectedRegionId(clickedRegion.id)
       setInteractionState('moving_region')
       activeRegionIdRef.current = clickedRegion.id
       dragStartRef.current = imgPos
       initialRectRef.current = { ...clickedRegion }
     } else {
+      if (e.shiftKey) {
+        // Shift+拖拽空白：框选
+        setInteractionState('selection_rect')
+        selectionRectRef.current = { startX: imgPos.x, startY: imgPos.y, endX: imgPos.x, endY: imgPos.y }
+        return
+      }
       setSelectedRegionId(null)
       setInteractionState('drawing')
       dragStartRef.current = imgPos
     }
-  }, [viewportRef, transform, toolMode, selectedRegionId, regions, screenToImage, setSelectedRegionId, setToolMode, updateRegionProperty, getResizeHandle, getColorAtPixel])
+  }, [viewportRef, transform, toolMode, selectedRegionId, regions, screenToImage, setSelectedRegionId, setToolMode, updateRegionProperty, getResizeHandle, getColorAtPixel, toggleRegionSelect, setSelectedRegionIds, selectedRegionIds])
 
   const handleMouseMove = useCallback((e) => {
     const rect = viewportRef.current.getBoundingClientRect()
@@ -161,14 +176,50 @@ export function useCanvasInteraction({
       const dy = imgPos.y - dragStartRef.current.y
       const init = initialRectRef.current
       const moved = { ...init, x: init.x + dx, y: init.y + dy }
-      setRegions(regions.map((r) =>
-        r.id === activeRegionIdRef.current ? moved : r,
-      ))
+      // 多选：移动所有选中区域
+      if (selectedRegionIds.length > 1 && selectedRegionIds.includes(activeRegionIdRef.current)) {
+        setRegions(regions.map((r) => {
+          if (!selectedRegionIds.includes(r.id)) return r
+          // ponytail: 所有选中区域用相同 delta 移动
+          const origInit = initialRectRef.current
+          if (r.id === activeRegionIdRef.current) return moved
+          // 其他选中区域用相同偏移
+          const orig = regions.find((or) => or.id === r.id)
+          return orig ? { ...orig, x: orig.x + dx, y: orig.y + dy } : r
+        }))
+      } else {
+        setRegions(regions.map((r) =>
+          r.id === activeRegionIdRef.current ? moved : r,
+        ))
+      }
       // 计算对齐辅助线
       if (onGuidesChange) {
         const { guides } = getAlignmentGuides(moved, regions, imgSize)
         onGuidesChange(guides)
         if (renderCanvas) renderCanvas()
+      }
+    } else if (interactionState === 'selection_rect') {
+      // 更新框选矩形
+      selectionRectRef.current = { ...selectionRectRef.current, endX: imgPos.x, endY: imgPos.y }
+      // 绘制框选矩形
+      if (renderCanvas) {
+        renderCanvas()
+        const sr = selectionRectRef.current
+        const ctx = viewportRef.current.querySelector('canvas')?.getContext('2d')
+        if (ctx) {
+          const x = Math.min(sr.startX, sr.endX)
+          const y = Math.min(sr.startY, sr.endY)
+          const w = Math.abs(sr.endX - sr.startX)
+          const h = Math.abs(sr.endY - sr.startY)
+          ctx.save()
+          ctx.strokeStyle = '#4f46e5'
+          ctx.lineWidth = 1 / transform.scale
+          ctx.setLineDash([4, 4])
+          ctx.fillStyle = 'rgba(79, 70, 229, 0.1)'
+          ctx.fillRect(x, y, w, h)
+          ctx.strokeRect(x, y, w, h)
+          ctx.restore()
+        }
       }
     } else if (interactionState === 'resizing_region') {
       const dx = imgPos.x - dragStartRef.current.x
@@ -251,6 +302,20 @@ export function useCanvasInteraction({
         setRegions(newRegions)
         setSelectedRegionId(newRegion.id)
       }
+    } else if (interactionState === 'selection_rect') {
+      // 框选完成：选中矩形内的所有区域
+      const sr = selectionRectRef.current
+      const x1 = Math.min(sr.startX, sr.endX)
+      const y1 = Math.min(sr.startY, sr.endY)
+      const x2 = Math.max(sr.startX, sr.endX)
+      const y2 = Math.max(sr.startY, sr.endY)
+      const ids = regions
+        .filter((r) => r.x >= x1 && r.y >= y1 && r.x + r.width <= x2 && r.y + r.height <= y2)
+        .map((r) => r.id)
+      if (ids.length > 0) {
+        setSelectedRegionIds(ids)
+      }
+      selectionRectRef.current = null
     }
 
     setInteractionState('idle')
@@ -258,7 +323,7 @@ export function useCanvasInteraction({
     initialRectRef.current = null
     initialTransformRef.current = null
     resizeHandleRef.current = null
-  }, [interactionState, regions, viewportRef, screenToImage, pushHistory, setRegions, setSelectedRegionId])
+  }, [interactionState, regions, viewportRef, screenToImage, pushHistory, setRegions, setSelectedRegionId, selectedRegionIds, setSelectedRegionIds])
 
   return {
     interactionState,

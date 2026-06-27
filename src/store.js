@@ -11,6 +11,7 @@ const useStore = create((set, get) => ({
   // 区域状态
   regions: [],
   selectedRegionId: null,
+  selectedRegionIds: [], // 多选
 
   // 工具模式
   toolMode: 'draw',
@@ -24,8 +25,43 @@ const useStore = create((set, get) => ({
   setImageSrc: (imageSrc) => set({ imageSrc }),
   setImgSize: (imgSize) => set({ imgSize }),
   setRegions: (regions) => set({ regions }),
-  setSelectedRegionId: (id) => set({ selectedRegionId: id }),
+  setSelectedRegionId: (id) => set({ selectedRegionId: id, selectedRegionIds: id ? [id] : [] }),
   setToolMode: (mode) => set({ toolMode: mode }),
+
+  // 多选操作
+  toggleRegionSelect: (id) => {
+    const { selectedRegionIds } = get()
+    const idx = selectedRegionIds.indexOf(id)
+    const next = idx >= 0
+      ? selectedRegionIds.filter((i) => i !== id)
+      : [...selectedRegionIds, id]
+    set({ selectedRegionIds: next, selectedRegionId: next.length > 0 ? next[next.length - 1] : null })
+  },
+
+  setSelectedRegionIds: (ids) => set({
+    selectedRegionIds: ids,
+    selectedRegionId: ids.length > 0 ? ids[ids.length - 1] : null,
+  }),
+
+  clearSelection: () => set({ selectedRegionId: null, selectedRegionIds: [] }),
+
+  // 批量移动选中区域
+  moveSelectedRegions: (dx, dy) => {
+    const { regions, selectedRegionIds } = get()
+    const ids = new Set(selectedRegionIds)
+    set({
+      regions: regions.map((r) => ids.has(r.id) ? { ...r, x: r.x + dx, y: r.y + dy } : r),
+    })
+  },
+
+  // 批量删除选中区域
+  deleteSelectedRegions: () => {
+    const { regions, selectedRegionIds, pushHistory } = get()
+    const ids = new Set(selectedRegionIds)
+    const newRegions = regions.filter((r) => !ids.has(r.id))
+    pushHistory(newRegions)
+    set({ selectedRegionId: null, selectedRegionIds: [] })
+  },
 
   // 历史操作
   pushHistory: (newRegions) => {
