@@ -7,6 +7,7 @@ import { useViewTransform } from './hooks/useViewTransform'
 import { useCanvasRenderer } from './hooks/useCanvasRenderer'
 import { useCanvasInteraction } from './hooks/useCanvasInteraction'
 import { generateResult as exportImage } from './utils/exportImage'
+import { saveProject, openProject } from './utils/projectIO'
 import useStore from './store'
 
 export default function App() {
@@ -145,6 +146,18 @@ export default function App() {
     reader.readAsDataURL(file)
   }
 
+  const handleSave = () => saveProject({ imageSrc, imgSize, regions, transform })
+
+  const handleOpen = async () => {
+    const data = await openProject()
+    if (!data) return
+    setImageSrc(data.imageSrc)
+    setImgSize(data.imgSize)
+    setRegions(data.regions)
+    setStep(2)
+    if (data.transform) fitScreen(data.imgSize.width, data.imgSize.height)
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-800 overflow-hidden font-sans">
       <Toolbar
@@ -156,6 +169,8 @@ export default function App() {
         onUndo={undo}
         onRedo={redo}
         onExport={() => exportImage(imageSrc, regions, outputCanvasRef.current)}
+        onSave={handleSave}
+        onOpen={handleOpen}
       />
       <main className="flex-1 flex overflow-hidden">
         {step === 1 ? (

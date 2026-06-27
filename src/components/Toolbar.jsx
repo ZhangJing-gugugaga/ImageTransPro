@@ -1,6 +1,6 @@
-import { Edit3, Download, Undo2, Redo2, MousePointer2, Hand } from 'lucide-react'
+import { Edit3, Download, Undo2, Redo2, MousePointer2, Hand, Save, FolderOpen } from 'lucide-react'
 
-export default function Toolbar({ step, toolMode, setToolMode, canUndo, canRedo, onUndo, onRedo, onExport }) {
+export default function Toolbar({ step, toolMode, setToolMode, canUndo, canRedo, onUndo, onRedo, onExport, onSave, onOpen }) {
   return (
     <header className="h-14 bg-white border-b border-slate-200 px-6 flex justify-between items-center z-30 shrink-0">
       <div className="flex items-center gap-4">
@@ -30,6 +30,13 @@ export default function Toolbar({ step, toolMode, setToolMode, canUndo, canRedo,
               title="重做 (Ctrl+Shift+Z)"
             >
               <Redo2 className="w-4 h-4" />
+            </button>
+            <div className="w-px h-4 bg-slate-200 mx-2"></div>
+            <button onClick={onSave} className="p-2 hover:bg-slate-100 rounded-md transition-colors" title="保存项目">
+              <Save className="w-4 h-4" />
+            </button>
+            <button onClick={onOpen} className="p-2 hover:bg-slate-100 rounded-md transition-colors" title="打开项目">
+              <FolderOpen className="w-4 h-4" />
             </button>
             <div className="w-px h-4 bg-slate-200 mx-2"></div>
             <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
