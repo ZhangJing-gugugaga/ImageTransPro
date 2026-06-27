@@ -60,20 +60,47 @@ export default function App() {
   // 键盘快捷键
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const isInput = document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'INPUT'
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault()
         e.shiftKey ? redo() : undo()
+        return
       }
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRegionId && interaction.interactionState === 'idle') {
-        if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-          deleteRegion(selectedRegionId)
+      // Ctrl+Y: 重做
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault()
+        redo()
+        return
+      }
+      // Ctrl+D: 复制选中区域
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedRegionId && !isInput) {
+        e.preventDefault()
+        const src = regions.find((r) => r.id === selectedRegionId)
+        if (src) {
+          const newRegion = { ...src, id: crypto.randomUUID(), x: src.x + 10, y: src.y + 10 }
+          addRegion(newRegion)
         }
+        return
+      }
+      // 方向键微移
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && selectedRegionId && !isInput) {
+        e.preventDefault()
+        const step = e.shiftKey ? 10 : 1
+        const src = regions.find((r) => r.id === selectedRegionId)
+        if (!src) return
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
+        setRegions(regions.map((r) => r.id === selectedRegionId ? { ...r, x: src.x + dx, y: src.y + dy } : r))
+        return
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRegionId && interaction.interactionState === 'idle' && !isInput) {
+        deleteRegion(selectedRegionId)
       }
       if (e.key === 'Escape' && toolMode === 'picker') setToolMode('draw')
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedRegionId, toolMode, interaction.interactionState, undo, redo, deleteRegion, setToolMode])
+  }, [selectedRegionId, toolMode, regions, interaction.interactionState, undo, redo, deleteRegion, setToolMode, addRegion, setRegions])
 
   // 拖拽上传
   useEffect(() => {
