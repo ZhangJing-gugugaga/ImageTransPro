@@ -28,7 +28,10 @@
 - [x] FR-13 打开 .imagetrans 项目（2026-06-28）— 提交：e10ec6e
 - [x] FR-14 最近文件列表（2026-06-28）— 提交：462aba9
 - [x] FR-08 框选多区域（2026-06-28）— 提交：a275dda
+- [x] M4 质量基建（2026-06-28）— 提交：bc9e39b
+  - ESLint + Prettier + Vitest + Testing Library
+  - 11 个单元测试全部通过
+  - npm scripts: lint / format / test / test:watch
 
 ## 未开始
-- [ ] M4 质量基建
 - [ ] M5 验收 + Bug 修复
