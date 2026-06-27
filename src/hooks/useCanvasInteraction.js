@@ -211,7 +211,7 @@ export function useCanvasInteraction({
 
       if (width > 5 && height > 5) {
         const newRegion = {
-          id: `reg-${Date.now()}`,
+          id: crypto.randomUUID(),
           x: Math.min(imgPos.x, dragStartRef.current.x),
           y: Math.min(imgPos.y, dragStartRef.current.y),
           width,
