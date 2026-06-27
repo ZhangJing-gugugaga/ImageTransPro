@@ -69,7 +69,7 @@ export function useCanvasInteraction({
         if (selectedRegionId) {
           updateRegionProperty(selectedRegionId, 'bgColor', result.sRGBHex, true)
         }
-      } catch (e) {
+      } catch (_e) {
         // 取色器取消
       }
     } else {
@@ -180,8 +180,6 @@ export function useCanvasInteraction({
       if (selectedRegionIds.length > 1 && selectedRegionIds.includes(activeRegionIdRef.current)) {
         setRegions(regions.map((r) => {
           if (!selectedRegionIds.includes(r.id)) return r
-          // ponytail: 所有选中区域用相同 delta 移动
-          const origInit = initialRectRef.current
           if (r.id === activeRegionIdRef.current) return moved
           // 其他选中区域用相同偏移
           const orig = regions.find((or) => or.id === r.id)
@@ -239,7 +237,7 @@ export function useCanvasInteraction({
         newRect.y = init.y + (init.height - finalHeight)
         newRect.height = finalHeight
       }
-      const resized = { ...r, ...newRect }
+      const resized = { ...init, ...newRect }
       setRegions(regions.map((r) => (r.id === activeRegionIdRef.current ? resized : r)))
       // 计算对齐辅助线
       if (onGuidesChange) {

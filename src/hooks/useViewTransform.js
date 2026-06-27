@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 
 export function useViewTransform(viewportRef) {
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 })
