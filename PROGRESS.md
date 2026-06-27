@@ -23,12 +23,12 @@
 - [x] FR-10 快捷键增强（2026-06-28）— 提交：65079de
 - [x] FR-09 对齐辅助线（2026-06-28）— 提交：32e98b0
 - [x] FR-16 大图导出 toBlob（2026-06-28）— 提交：60e02f9
+- [x] FR-11 导出用 dialog.showSaveDialog（2026-06-28）— 提交：5ebda97
+- [x] FR-12 保存 .imagetrans 项目（2026-06-28）— 提交：e10ec6e
+- [x] FR-13 打开 .imagetrans 项目（2026-06-28）— 提交：e10ec6e
+- [x] FR-14 最近文件列表（2026-06-28）— 提交：462aba9
 
 ## 未开始
 - [ ] FR-08 框选多区域
-- [ ] FR-11 导出用 dialog.showSaveDialog
-- [ ] FR-12 保存 .imagetrans 项目
-- [ ] FR-13 打开 .imagetrans 项目
-- [ ] FR-14 最近文件列表
 - [ ] M4 质量基建
 - [ ] M5 验收 + Bug 修复
