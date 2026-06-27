@@ -13,11 +13,11 @@
   - 文件：src/store.js（新增）, src/App.jsx（144 行）
   - 验证：build 通过（174.78 kB gzip 55.57 kB）
   - 提交：72599e3
+- [x] FR-04 修复 pushHistory 闭包（2026-06-28）— Zustand get() 已解决
+- [x] FR-05 区域 ID 改用 crypto.randomUUID（2026-06-28）— 提交：8c91e27
+- [x] FR-06 历史上限 + UI 状态（2026-06-28）— store.js MAX_HISTORY=50 + Toolbar 已显示
 
 ## 未开始
-- [ ] FR-04 修复 pushHistory 闭包
-- [ ] FR-05 区域 ID 改用 crypto.randomUUID
-- [ ] FR-06 历史上限 + UI 状态
 - [ ] FR-07 Space + 拖拽平移优化
 - [ ] FR-08 框选多区域
 - [ ] FR-09 对齐辅助线
