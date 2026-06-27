@@ -1,6 +1,6 @@
 import { Upload } from 'lucide-react'
 
-export default function UploadScreen({ fileInputRef, onFileChange }) {
+export default function UploadScreen({ fileInputRef, onFileChange, error }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-10 bg-slate-50">
       <div className="max-w-md w-full bg-white p-12 rounded-[2.5rem] shadow-2xl shadow-slate-200 text-center border border-slate-100">
@@ -27,6 +27,9 @@ export default function UploadScreen({ fileInputRef, onFileChange }) {
         <p className="text-xs text-slate-300 mt-4">
           或直接拖拽图片到窗口
         </p>
+        {error && (
+          <p className="text-xs text-red-500 mt-3 font-medium">{error}</p>
+        )}
       </div>
     </div>
   )

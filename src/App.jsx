@@ -17,6 +17,8 @@ export default function App() {
     updateRegionProperty, deleteRegion, insertSymbol, addRegion,
   } = useStore()
 
+  const [loadError, setLoadError] = useState(null)
+
   const viewportRef = useRef(null)
   const fileInputRef = useRef(null)
   const textAreaRef = useRef(null)
@@ -70,9 +72,12 @@ export default function App() {
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
+    setLoadError(null)
     const reader = new FileReader()
+    reader.onerror = () => setLoadError('文件读取失败，请检查文件是否损坏')
     reader.onload = (event) => {
       const img = new Image()
+      img.onerror = () => setLoadError('图片加载失败，请尝试其他格式（PNG/JPG）')
       img.onload = () => {
         setImageSrc(img.src)
         setImgSize({ width: img.width, height: img.height })
@@ -106,7 +111,7 @@ export default function App() {
       />
       <main className="flex-1 flex overflow-hidden">
         {step === 1 ? (
-          <UploadScreen fileInputRef={fileInputRef} onFileChange={handleFileChange} />
+          <UploadScreen fileInputRef={fileInputRef} onFileChange={handleFileChange} error={loadError} />
         ) : (
           <>
             <CanvasViewport
