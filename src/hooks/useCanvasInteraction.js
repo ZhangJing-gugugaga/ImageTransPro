@@ -32,6 +32,16 @@ export function useCanvasInteraction({
   const initialTransformRef = useRef(null)
   const selectionRectRef = useRef(null) // { startX, startY, endX, endY }
 
+  // 用 ref 持有频繁变化的回调，避免 useCallback 依赖过多导致重渲染
+  const onGuidesChangeRef = useRef(onGuidesChange)
+  const renderCanvasRef = useRef(renderCanvas)
+  const imgSizeRef = useRef(imgSize)
+  const selectedRegionIdsRef = useRef(selectedRegionIds)
+  onGuidesChangeRef.current = onGuidesChange
+  renderCanvasRef.current = renderCanvas
+  imgSizeRef.current = imgSize
+  selectedRegionIdsRef.current = selectedRegionIds
+
   const getResizeHandle = useCallback((imgPos, region) => {
     if (!region) return null
     const handleSize = 12 / transform.scale
@@ -69,7 +79,7 @@ export function useCanvasInteraction({
         if (selectedRegionId) {
           updateRegionProperty(selectedRegionId, 'bgColor', result.sRGBHex, true)
         }
-      } catch (_e) {
+      } catch {
         // 取色器取消
       }
     } else {
@@ -150,7 +160,7 @@ export function useCanvasInteraction({
       setInteractionState('drawing')
       dragStartRef.current = imgPos
     }
-  }, [viewportRef, transform, toolMode, selectedRegionId, regions, screenToImage, setSelectedRegionId, setToolMode, updateRegionProperty, getResizeHandle, getColorAtPixel, toggleRegionSelect, setSelectedRegionIds, selectedRegionIds])
+  }, [viewportRef, transform, toolMode, selectedRegionId, regions, screenToImage, setSelectedRegionId, setToolMode, updateRegionProperty, getResizeHandle, getColorAtPixel, toggleRegionSelect])
 
   const handleMouseMove = useCallback((e) => {
     const rect = viewportRef.current.getBoundingClientRect()
@@ -177,9 +187,9 @@ export function useCanvasInteraction({
       const init = initialRectRef.current
       const moved = { ...init, x: init.x + dx, y: init.y + dy }
       // 多选：移动所有选中区域
-      if (selectedRegionIds.length > 1 && selectedRegionIds.includes(activeRegionIdRef.current)) {
+      if (selectedRegionIdsRef.current.length > 1 && selectedRegionIdsRef.current.includes(activeRegionIdRef.current)) {
         setRegions(regions.map((r) => {
-          if (!selectedRegionIds.includes(r.id)) return r
+          if (!selectedRegionIdsRef.current.includes(r.id)) return r
           if (r.id === activeRegionIdRef.current) return moved
           // 其他选中区域用相同偏移
           const orig = regions.find((or) => or.id === r.id)
@@ -191,17 +201,17 @@ export function useCanvasInteraction({
         ))
       }
       // 计算对齐辅助线
-      if (onGuidesChange) {
-        const { guides } = getAlignmentGuides(moved, regions, imgSize)
-        onGuidesChange(guides)
-        if (renderCanvas) renderCanvas()
+      if (onGuidesChangeRef.current) {
+        const { guides } = getAlignmentGuides(moved, regions, imgSizeRef.current)
+        onGuidesChangeRef.current(guides)
+        if (renderCanvasRef.current) renderCanvasRef.current()
       }
     } else if (interactionState === 'selection_rect') {
       // 更新框选矩形
       selectionRectRef.current = { ...selectionRectRef.current, endX: imgPos.x, endY: imgPos.y }
       // 绘制框选矩形
-      if (renderCanvas) {
-        renderCanvas()
+      if (renderCanvasRef.current) {
+        renderCanvasRef.current()
         const sr = selectionRectRef.current
         const ctx = viewportRef.current.querySelector('canvas')?.getContext('2d')
         if (ctx) {
@@ -240,10 +250,10 @@ export function useCanvasInteraction({
       const resized = { ...init, ...newRect }
       setRegions(regions.map((r) => (r.id === activeRegionIdRef.current ? resized : r)))
       // 计算对齐辅助线
-      if (onGuidesChange) {
-        const { guides } = getAlignmentGuides(resized, regions, imgSize)
-        onGuidesChange(guides)
-        if (renderCanvas) renderCanvas()
+      if (onGuidesChangeRef.current) {
+        const { guides } = getAlignmentGuides(resized, regions, imgSizeRef.current)
+        onGuidesChangeRef.current(guides)
+        if (renderCanvasRef.current) renderCanvasRef.current()
       }
     }
 
@@ -267,7 +277,7 @@ export function useCanvasInteraction({
 
   const handleMouseUp = useCallback((e) => {
     // 清除对齐辅助线
-    if (onGuidesChange) onGuidesChange([])
+    if (onGuidesChangeRef.current) onGuidesChangeRef.current([])
 
     if (interactionState === 'moving_region' || interactionState === 'resizing_region') {
       pushHistory(regions)
@@ -321,7 +331,7 @@ export function useCanvasInteraction({
     initialRectRef.current = null
     initialTransformRef.current = null
     resizeHandleRef.current = null
-  }, [interactionState, regions, viewportRef, screenToImage, pushHistory, setRegions, setSelectedRegionId, selectedRegionIds, setSelectedRegionIds])
+  }, [interactionState, regions, viewportRef, screenToImage, pushHistory, setRegions, setSelectedRegionId, setSelectedRegionIds])
 
   return {
     interactionState,
