@@ -3,19 +3,19 @@ import Toolbar from './components/Toolbar'
 import UploadScreen from './components/UploadScreen'
 import CanvasViewport from './components/CanvasViewport'
 import PropertyPanel from './components/PropertyPanel'
-import { useHistory } from './hooks/useHistory'
 import { useViewTransform } from './hooks/useViewTransform'
 import { useCanvasRenderer } from './hooks/useCanvasRenderer'
 import { useCanvasInteraction } from './hooks/useCanvasInteraction'
 import { generateResult as exportImage } from './utils/exportImage'
+import useStore from './store'
 
 export default function App() {
-  const [step, setStep] = useState(1)
-  const [imageSrc, setImageSrc] = useState(null)
-  const [imgSize, setImgSize] = useState({ width: 0, height: 0 })
-  const [regions, setRegions] = useState([])
-  const [selectedRegionId, setSelectedRegionId] = useState(null)
-  const [toolMode, setToolMode] = useState('draw')
+  const { step, imageSrc, imgSize, regions, selectedRegionId, toolMode } = useStore()
+  const {
+    setStep, setImageSrc, setImgSize, setRegions, setSelectedRegionId, setToolMode,
+    pushHistory, undo, redo, canUndo, canRedo, resetHistory,
+    updateRegionProperty, deleteRegion, insertSymbol, addRegion,
+  } = useStore()
 
   const viewportRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -23,20 +23,13 @@ export default function App() {
   const offscreenCanvasRef = useRef(null)
   const outputCanvasRef = useRef(null)
 
-  const { pushHistory, undo, redo, canUndo, canRedo, resetHistory } = useHistory()
   const { transform, setTransform, fitScreen, zoom, handleWheel, screenToImage } = useViewTransform(viewportRef)
   const { canvasRef, renderCanvas } = useCanvasRenderer(imageSrc, regions, selectedRegionId, transform.scale)
 
   const interaction = useCanvasInteraction({
     viewportRef, transform, setTransform, screenToImage,
     regions, setRegions, selectedRegionId, setSelectedRegionId,
-    pushHistory, updateRegionProperty: (id, prop, value, shouldPush) => {
-      setRegions((prev) => {
-        const next = prev.map((r) => (r.id === id ? { ...r, [prop]: value } : r))
-        if (shouldPush) pushHistory(next)
-        return next
-      })
-    },
+    pushHistory, updateRegionProperty,
     offscreenCanvasRef, imgSize, toolMode, setToolMode,
   })
 
@@ -48,8 +41,7 @@ export default function App() {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault()
-        const result = e.shiftKey ? redo() : undo()
-        if (result) { setRegions(result); setSelectedRegionId(null) }
+        e.shiftKey ? redo() : undo()
       }
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRegionId && interaction.interactionState === 'idle') {
         if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
@@ -60,7 +52,7 @@ export default function App() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedRegionId, toolMode, interaction.interactionState, undo, redo])
+  }, [selectedRegionId, toolMode, interaction.interactionState, undo, redo, deleteRegion, setToolMode])
 
   // 拖拽上传
   useEffect(() => {
@@ -73,7 +65,7 @@ export default function App() {
     window.addEventListener('dragover', handleDragOver)
     window.addEventListener('drop', handleDrop)
     return () => { window.removeEventListener('dragover', handleDragOver); window.removeEventListener('drop', handleDrop) }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
@@ -100,34 +92,16 @@ export default function App() {
     reader.readAsDataURL(file)
   }
 
-  const deleteRegion = (id) => {
-    const newRegions = regions.filter((r) => r.id !== id)
-    pushHistory(newRegions)
-    setRegions(newRegions)
-    setSelectedRegionId(null)
-  }
-
-  const insertSymbol = (symbol) => {
-    if (!selectedRegionId) return
-    const region = regions.find((r) => r.id === selectedRegionId)
-    if (region) {
-      const newRegions = regions.map((r) => r.id === selectedRegionId ? { ...r, translatedText: r.translatedText + symbol } : r)
-      pushHistory(newRegions)
-      setRegions(newRegions)
-      setTimeout(() => textAreaRef.current?.focus(), 0)
-    }
-  }
-
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC] text-slate-800 overflow-hidden font-sans">
       <Toolbar
         step={step}
         toolMode={toolMode}
         setToolMode={setToolMode}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onUndo={() => { const r = undo(); if (r) { setRegions(r); setSelectedRegionId(null) } }}
-        onRedo={() => { const r = redo(); if (r) { setRegions(r); setSelectedRegionId(null) } }}
+        canUndo={canUndo()}
+        canRedo={canRedo()}
+        onUndo={undo}
+        onRedo={redo}
         onExport={() => exportImage(imageSrc, regions, outputCanvasRef.current)}
       />
       <main className="flex-1 flex overflow-hidden">
@@ -152,18 +126,12 @@ export default function App() {
             <PropertyPanel
               selectedRegionId={selectedRegionId}
               regions={regions}
-              onUpdateProperty={(id, prop, value, shouldPush) => {
-                setRegions((prev) => {
-                  const next = prev.map((r) => (r.id === id ? { ...r, [prop]: value } : r))
-                  if (shouldPush) pushHistory(next)
-                  return next
-                })
-              }}
+              onUpdateProperty={updateRegionProperty}
               onDeleteRegion={deleteRegion}
               onInsertSymbol={insertSymbol}
               onActivateEyeDropper={interaction.activateEyeDropper}
               toolMode={toolMode}
-              pushHistory={pushHistory}
+              pushHistory={() => pushHistory(regions)}
               textAreaRef={textAreaRef}
             />
             <canvas ref={offscreenCanvasRef} className="hidden" />
