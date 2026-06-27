@@ -9,9 +9,12 @@
   - 文件：src/utils/canvasRenderer.js（新增）, src/hooks/useCanvasRenderer.js（简化）, src/utils/exportImage.js（简化）
   - 验证：build 通过（173.66 kB gzip 55.19 kB）
   - 提交：acbc588
+- [x] FR-03 引入 Zustand 状态管理（2026-06-28）
+  - 文件：src/store.js（新增）, src/App.jsx（144 行）
+  - 验证：build 通过（174.78 kB gzip 55.57 kB）
+  - 提交：72599e3
 
 ## 未开始
-- [ ] FR-03 引入 Zustand 状态管理
 - [ ] FR-04 修复 pushHistory 闭包
 - [ ] FR-05 区域 ID 改用 crypto.randomUUID
 - [ ] FR-06 历史上限 + UI 状态
