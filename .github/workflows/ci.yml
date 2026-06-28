@@ -15,9 +15,20 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      - name: Install
+        run: |
+          set +e
+          npm ci > /tmp/ci.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            err=$(grep -iE 'npm err|error|ebadengine|ebadplatform|e404|enoent|cannot|fail' /tmp/ci.log | tail -15 | tr '\n' '|' | cut -c1-600)
+            echo "::error file=.github/workflows/ci.yml,line=19::npm ci exit=$code | $err"
+            echo "===== FULL npm ci LOG ====="
+            cat /tmp/ci.log
+            exit 1
+          fi
         env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"  # CI 只跑 lint/test/build，不需要 electron 二进制
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
       - name: Lint
         run: npm run lint
       - name: Test
