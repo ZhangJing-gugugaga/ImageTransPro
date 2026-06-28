@@ -16,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"  # CI 只跑 lint/test/build，不需要 electron 二进制
       - name: Lint
         run: npm run lint
       - name: Test
